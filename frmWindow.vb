@@ -25,7 +25,7 @@ Imports System.Reflection
 '  .Take(numberToRetrieve)).Cast<InstallationSummary>().ToList();
 
 'Dim installationSummaries As IEnumerable(Of InstallationSummary) = QueryAndCacheEtags(Function(session) session.Advanced.LuceneQuery(Of InstallationSummary)().Include(Function(x) x.ApplicationServerId).Include(Function(x) x.ApplicationWithOverrideVariableGroup.ApplicationId).Include(Function(x) x.ApplicationWithOverrideVariableGroup.CustomVariableGroupId).OrderByDescending(Function(summary) summary.InstallationStart).Take(numberToRetrieve)).Cast(Of InstallationSummary)().ToList()
-Public Class main
+Public Class frmWindow
 
     Dim CurentWorkTime As WorkTime = New WorkTime
 

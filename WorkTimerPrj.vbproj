@@ -113,10 +113,10 @@
     <Import Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="main.Designer.vb">
-      <DependentUpon>main.vb</DependentUpon>
+    <Compile Include="frmWindow.Designer.vb">
+      <DependentUpon>frmWindow.vb</DependentUpon>
     </Compile>
-    <Compile Include="main.vb">
+    <Compile Include="frmWindow.vb">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="My Project\AssemblyInfo.vb" />
@@ -137,8 +137,8 @@
     <Compile Include="WorkTime.vb" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="main.resx">
-      <DependentUpon>main.vb</DependentUpon>
+    <EmbeddedResource Include="frmWindow.resx">
+      <DependentUpon>frmWindow.vb</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="My Project\Resources.resx">
       <Generator>VbMyResourcesResXFileCodeGenerator</Generator>
