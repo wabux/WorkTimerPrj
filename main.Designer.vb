@@ -94,7 +94,7 @@ Partial Class main
         '
         'btnDBClear
         '
-        Me.btnDBClear.Location = New System.Drawing.Point(246, 8)
+        Me.btnDBClear.Location = New System.Drawing.Point(264, 8)
         Me.btnDBClear.Name = "btnDBClear"
         Me.btnDBClear.Size = New System.Drawing.Size(75, 23)
         Me.btnDBClear.TabIndex = 5
