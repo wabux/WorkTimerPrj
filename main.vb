@@ -194,31 +194,31 @@ Public Class main
     End Sub
 
     Private Sub OnPowerModeChanged(ByVal sender As Object, ByVal e As Microsoft.Win32.PowerModeChangedEventArgs)
-        If e.Mode = Microsoft.Win32.PowerModes.Resume Then
-            Me.MakeNewEntry("Resume")
-            Timer1.Enabled = True
-        ElseIf e.Mode = Microsoft.Win32.PowerModes.Suspend Then
-            Me.SetEndTimeEntry("Suspend")
-            Timer1.Enabled = False
-        ElseIf e.Mode = Microsoft.Win32.PowerModes.StatusChange Then
-            Me.SetEndTimeEntry("StatusChange")
-            Timer1.Enabled = False
-        End If
+        Select Case e.Mode
+            Case Microsoft.Win32.PowerModes.Resume
+                Me.MakeNewEntry("Resume")
+                Timer1.Enabled = True
+
+            Case Microsoft.Win32.PowerModes.Suspend
+                Me.SetEndTimeEntry("Suspend")
+                Timer1.Enabled = False
+
+            Case Microsoft.Win32.PowerModes.StatusChange
+                Me.SetEndTimeEntry("StatusChange")
+                Timer1.Enabled = False
+
+        End Select
     End Sub
-
-
 
     Private Sub SessionEnding(ByVal sender As System.Object, ByVal e As Microsoft.Win32.SessionEndingEventArgs)
         Select Case e.Reason
             Case Microsoft.Win32.SessionEndReasons.Logoff
                 'logoff
-                console.AppendText(DateTime.Now & " - SessionEndReasons.Logoff")
-                console.AppendText(vbCrLf)
+                Me.MakeNewEntry("Logoff")
                 Timer1.Enabled = False
             Case Microsoft.Win32.SessionEndReasons.SystemShutdown
                 'shutdown
-                console.AppendText(DateTime.Now & " - SessionEndReasons.SystemShutdown")
-                console.AppendText(vbCrLf)
+                Me.MakeNewEntry("Shutdown")
                 Timer1.Enabled = False
         End Select
     End Sub
