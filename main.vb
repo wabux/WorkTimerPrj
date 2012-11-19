@@ -38,8 +38,8 @@ NotInheritable Class MyNotifyIconApplication
         'http://www.attilan.com/2006/08/accessing-embedded-resources-using.html
         Dim _assembly As Assembly = Assembly.GetExecutingAssembly
         Dim arrs() As String = _assembly.GetManifestResourceNames()
-        Dim s As System.IO.Stream = _assembly.GetManifestResourceStream("NotifyIconApplication.Reminder.ico")
-        notico.Icon = New Icon(_assembly.GetManifestResourceStream("NotifyIconApplication.Reminder.ico")) 'NotifyIconApplication
+        Dim s As System.IO.Stream = _assembly.GetManifestResourceStream("WorkTimerPrj.Reminder.ico")
+        notico.Icon = New Icon(_assembly.GetManifestResourceStream("WorkTimerPrj.Reminder.ico")) 'NotifyIconApplication
         ' Eigenes Icon einsetzen
         notico.Text = "Doppelklick mich!"
         ' Eigenen Text einsetzen

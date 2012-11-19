@@ -8,11 +8,11 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{5B1BBC0A-6878-4848-AAE8-B99D021D74A1}</ProjectGuid>
     <OutputType>WinExe</OutputType>
-    <StartupObject>WorkTimerPrj.My.MyApplication</StartupObject>
+    <StartupObject>Sub Main</StartupObject>
     <RootNamespace>WorkTimerPrj</RootNamespace>
     <AssemblyName>WorkTimerPrj</AssemblyName>
     <FileAlignment>512</FileAlignment>
-    <MyType>WindowsForms</MyType>
+    <MyType>WindowsFormsWithCustomSubMain</MyType>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <TargetFrameworkProfile>
     </TargetFrameworkProfile>
@@ -166,7 +166,7 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Resources\Reminder.ico" />
+    <EmbeddedResource Include="Resources\Reminder.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.VisualBasic.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
