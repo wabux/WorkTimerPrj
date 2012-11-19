@@ -19,23 +19,31 @@ Imports Raven.Abstractions.Commands
 
 '*****************************************************************************
 NotInheritable Class MyNotifyIconApplication
-    Dim documentStore As Raven.Client.Embedded.EmbeddableDocumentStore = New EmbeddableDocumentStore()
-    Dim session As Document.DocumentSession = CType(documentStore.OpenSession(), DocumentSession)
-    Dim CurentWorkTime As WorkTime = New WorkTime
-    Friend WithEvents Timer1 As System.Windows.Forms.Timer
-
+    Shared documentStore As Raven.Client.Embedded.EmbeddableDocumentStore = New EmbeddableDocumentStore()
+    Shared session As Document.DocumentSession ' = CType(documentStore.OpenSession(), DocumentSession)
+    Shared CurentWorkTime As WorkTime = New WorkTime
+    Shared WithEvents Timer1 As System.Windows.Forms.Timer
+    ' Shared Timer1 = New System.Windows.Forms.Timer
 
     Private Sub New()
     End Sub
+
     Private Shared notico As NotifyIcon
-    'test
+
     '==========================================================================
     Public Shared Sub Main(astrArg As String())
         Dim cm As ContextMenu
         Dim miCurr As MenuItem
         Dim iIndex As Integer = 0
-        Dim Timer1 = New System.Windows.Forms.Timer
-        Timer1.Interval = 60000
+
+        documentStore.DataDirectory = Path.Combine(My.Computer.FileSystem.SpecialDirectories.CurrentUserApplicationData, "DB")
+        documentStore.Initialize()
+        session = CType(documentStore.OpenSession(), DocumentSession)
+
+        ' Dim Timer1 As System.Windows.Forms.Timer
+        Timer1 = New System.Windows.Forms.Timer
+        Timer1.Interval = 6000
+        AddHandler Timer1.Tick, New System.EventHandler(AddressOf TimerTick)
 
         ' Kontextmenü erzeugen
         cm = New ContextMenu()
@@ -71,7 +79,7 @@ NotInheritable Class MyNotifyIconApplication
         AddHandler notico.DoubleClick, New EventHandler(AddressOf NotifyIconDoubleClick)
 
         'AddHandler Application.on
-
+        Timer1.Start()
         ' Ohne Appplication.Run geht es nicht
         Application.Run()
 
@@ -152,36 +160,36 @@ NotInheritable Class MyNotifyIconApplication
         Next
     End Sub
 
-    Private Sub SetEndTimeEntry(Optional ByVal StartEvent As String = "") '(sender As System.Object, e As System.EventArgs) Handles Timer1.Tick
+    Private Shared Sub SetEndTimeEntry(Optional ByVal StartEvent As String = "") '(sender As System.Object, e As System.EventArgs) Handles Timer1.Tick
         Dim CurentWorkTimeReadfromDB As Boolean = False
         CurentWorkTime.EndTime = DateTime.Now
 
         Dim results = From WTime In session.Query(Of WorkTime)() _
             .Take(1) _
             .OrderByDescending(Function(WTime) WTime.EndTime)
-            '.Distinct _
-            '.ToArray()
+        '.Distinct _
+        '.ToArray()
 
-            For Each li As WorkTime In results
+        For Each li As WorkTime In results
             CurentWorkTimeReadfromDB = True
-            Next
+        Next
 
-            If CurentWorkTime.EndTime.Date = DateAndTime.Now.Date Then
-                CurentWorkTime.EndTime = DateAndTime.Now
-                If StartEvent <> String.Empty Then CurentWorkTime.StartEvent = StartEvent
-                If Not CurentWorkTimeReadfromDB Then session.Store(CurentWorkTime)
-            ElseIf New TimeSpan(CurentWorkTime.EndTime.Date.Ticks - DateAndTime.Now.Date.Ticks).TotalDays >= 1 Then
-                session.Delete(CurentWorkTime)
-                CurentWorkTime = New WorkTime
-                CurentWorkTime.EndTime = DateAndTime.Now
-                CurentWorkTime.StartEvent = "overday"
-            Else
-                CurentWorkTime = New WorkTime
-                CurentWorkTime.EndTime = DateAndTime.Now
-                CurentWorkTime.StartEvent = "overnight"
-            End If
-            session.Store(CurentWorkTime)
-            session.SaveChanges()
+        If CurentWorkTime.EndTime.Date = DateAndTime.Now.Date Then
+            CurentWorkTime.EndTime = DateAndTime.Now
+            If StartEvent <> String.Empty Then CurentWorkTime.StartEvent = StartEvent
+            If Not CurentWorkTimeReadfromDB Then session.Store(CurentWorkTime)
+        ElseIf New TimeSpan(CurentWorkTime.EndTime.Date.Ticks - DateAndTime.Now.Date.Ticks).TotalDays >= 1 Then
+            session.Delete(CurentWorkTime)
+            CurentWorkTime = New WorkTime
+            CurentWorkTime.EndTime = DateAndTime.Now
+            CurentWorkTime.StartEvent = "overday"
+        Else
+            CurentWorkTime = New WorkTime
+            CurentWorkTime.EndTime = DateAndTime.Now
+            CurentWorkTime.StartEvent = "overnight"
+        End If
+        session.Store(CurentWorkTime)
+        session.SaveChanges()
     End Sub
 
     Private Sub OnPowerModeChanged(ByVal sender As Object, ByVal e As Microsoft.Win32.PowerModeChangedEventArgs)
@@ -191,13 +199,18 @@ NotInheritable Class MyNotifyIconApplication
                 Timer1.Enabled = True
 
             Case Microsoft.Win32.PowerModes.Suspend
-                Me.SetEndTimeEntry("Suspend")
+                MyNotifyIconApplication.SetEndTimeEntry("Suspend")
                 Timer1.Enabled = False
 
             Case Microsoft.Win32.PowerModes.StatusChange
-                Me.SetEndTimeEntry("StatusChange")
+                MyNotifyIconApplication.SetEndTimeEntry("StatusChange")
                 Timer1.Enabled = False
 
         End Select
+    End Sub
+
+    Private Shared Sub TimerTick(sender As System.Object, e As System.EventArgs)
+        MyNotifyIconApplication.SetEndTimeEntry()
+        MyNotifyIconApplication.notico.Text = String.Format("{0:hh}:{0:mm}", CurentWorkTime.WorkingHours)
     End Sub
 End Class
