@@ -1,9 +1,27 @@
-﻿Imports System.Windows.Forms
+﻿Imports System.IO
+Imports System.Linq
 Imports System.Drawing
+Imports Microsoft.Win32
+Imports System.Threading
 Imports System.Reflection
+Imports System.Windows.Forms
+Imports System.Threading.Tasks
+
+Imports Raven.Client
+Imports Raven.Client.Document
+Imports Raven.Client.Indexes
+Imports Raven.Client.Embedded
+Imports Raven.Storage.Esent
+Imports Raven.Json.Linq
+Imports Raven.Abstractions.Indexing
+Imports Raven.Abstractions.Commands
+
 
 '*****************************************************************************
 NotInheritable Class MyNotifyIconApplication
+    Dim documentStore As Raven.Client.Embedded.EmbeddableDocumentStore = New EmbeddableDocumentStore()
+    Dim session As Document.DocumentSession = CType(documentStore.OpenSession(), DocumentSession)
+
     Private Sub New()
     End Sub
     Private Shared notico As NotifyIcon
@@ -47,8 +65,29 @@ NotInheritable Class MyNotifyIconApplication
         notico.ContextMenu = cm
         AddHandler notico.DoubleClick, New EventHandler(AddressOf NotifyIconDoubleClick)
 
+        'AddHandler Application.on
+
         ' Ohne Appplication.Run geht es nicht
         Application.Run()
+
+        MessageBox.Show("Quit")
+
+    End Sub
+
+    Private Sub Starting()
+        'Dim documentStore As Raven.Client.Embedded.EmbeddableDocumentStore = New EmbeddableDocumentStore()
+        'MsgBox(My.Computer.FileSystem.SpecialDirectories.CurrentUserApplicationData)
+        documentStore.DataDirectory = Path.Combine(My.Computer.FileSystem.SpecialDirectories.CurrentUserApplicationData, "DB")
+        'Using documentStore = New DocumentStore() With {.Url = "http://localhost:8080", .DefaultDatabase = "Test"}
+        documentStore.Initialize()
+
+    End Sub
+
+    '==========================================================================
+    Private Sub Closing(sender As [Object], e As EventArgs)
+        MessageBox.Show("Quit")
+        session.Dispose()
+        documentStore.Dispose()
     End Sub
 
     '==========================================================================
