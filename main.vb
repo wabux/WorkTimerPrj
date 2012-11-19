@@ -7,7 +7,7 @@ NotInheritable Class MyNotifyIconApplication
     Private Sub New()
     End Sub
     Private Shared notico As NotifyIcon
-
+    'test
     '==========================================================================
     Public Shared Sub Main(astrArg As String())
         Dim cm As ContextMenu
