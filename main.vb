@@ -39,10 +39,11 @@ NotInheritable Class MyNotifyIconApplication
         documentStore.DataDirectory = Path.Combine(My.Computer.FileSystem.SpecialDirectories.CurrentUserApplicationData, "DB")
         documentStore.Initialize()
         session = CType(documentStore.OpenSession(), DocumentSession)
+        ReadEndTimeEntry()
 
         ' Dim Timer1 As System.Windows.Forms.Timer
         Timer1 = New System.Windows.Forms.Timer
-        Timer1.Interval = 6000
+        Timer1.Interval = 30000
         AddHandler Timer1.Tick, New System.EventHandler(AddressOf TimerTick)
 
         ' Kontextmenü erzeugen
@@ -72,7 +73,7 @@ NotInheritable Class MyNotifyIconApplication
         Dim s As System.IO.Stream = _assembly.GetManifestResourceStream("WorkTimerPrj.Reminder.ico")
         notico.Icon = New Icon(_assembly.GetManifestResourceStream("WorkTimerPrj.Reminder.ico")) 'NotifyIconApplication
         ' Eigenes Icon einsetzen
-        notico.Text = "Doppelklick mich!"
+        notico.Text = String.Format("{0:hh}:{0:mm}", CurentWorkTime.WorkingHours)
         ' Eigenen Text einsetzen
         notico.Visible = True
         notico.ContextMenu = cm
@@ -127,7 +128,7 @@ NotInheritable Class MyNotifyIconApplication
         session.SaveChanges()
     End Sub
 
-    Private Sub ReadEndTimeEntry(Optional ByVal StartEvent As String = "")
+    Private Shared Sub ReadEndTimeEntry(Optional ByVal StartEvent As String = "")
         Dim CurentWorkTimeReadfromDB As Boolean = False
 
         CurentWorkTime.EndTime = DateTime.Now
@@ -140,24 +141,24 @@ NotInheritable Class MyNotifyIconApplication
 
         For Each li As WorkTime In results
             Dim tspn As TimeSpan = New TimeSpan(li.EndTime.Ticks - li.StartTime.Ticks)
-
-            If CurentWorkTime.EndTime.Date = DateAndTime.Now.Date Then
-                CurentWorkTime.EndTime = DateAndTime.Now
-                If StartEvent <> String.Empty Then CurentWorkTime.StartEvent = StartEvent
-                If Not CurentWorkTimeReadfromDB Then session.Store(CurentWorkTime)
-            ElseIf New TimeSpan(CurentWorkTime.EndTime.Date.Ticks - DateAndTime.Now.Date.Ticks).TotalDays >= 1 Then
-                session.Delete(CurentWorkTime)
-                CurentWorkTime = New WorkTime
-                CurentWorkTime.EndTime = DateAndTime.Now
-                CurentWorkTime.StartEvent = "overday"
-            Else
-                CurentWorkTime = New WorkTime
-                CurentWorkTime.EndTime = DateAndTime.Now
-                CurentWorkTime.StartEvent = "overnight"
-            End If
-            session.Store(CurentWorkTime)
-            session.SaveChanges()
+            CurentWorkTime = li
         Next
+        If CurentWorkTime.EndTime.Date = DateAndTime.Now.Date Then
+            CurentWorkTime.EndTime = DateAndTime.Now
+            If StartEvent <> String.Empty Then CurentWorkTime.StartEvent = StartEvent
+            If Not CurentWorkTimeReadfromDB Then session.Store(CurentWorkTime)
+        ElseIf New TimeSpan(CurentWorkTime.EndTime.Date.Ticks - DateAndTime.Now.Date.Ticks).TotalDays >= 1 Then
+            session.Delete(CurentWorkTime)
+            CurentWorkTime = New WorkTime
+            CurentWorkTime.EndTime = DateAndTime.Now
+            CurentWorkTime.StartEvent = "overday"
+        Else
+            CurentWorkTime = New WorkTime
+            CurentWorkTime.EndTime = DateAndTime.Now
+            CurentWorkTime.StartEvent = "overnight"
+        End If
+        session.Store(CurentWorkTime)
+        session.SaveChanges()
     End Sub
 
     Private Shared Sub SetEndTimeEntry(Optional ByVal StartEvent As String = "") '(sender As System.Object, e As System.EventArgs) Handles Timer1.Tick
