@@ -23,6 +23,7 @@ NotInheritable Class MyNotifyIconApplication
     Shared session As Document.DocumentSession ' = CType(documentStore.OpenSession(), DocumentSession)
     Shared CurentWorkTime As WorkTime = New WorkTime
     Shared WithEvents Timer1 As System.Windows.Forms.Timer
+    ' Shared Timer1 = New System.Windows.Forms.Timer
 
     Private Sub New()
     End Sub
