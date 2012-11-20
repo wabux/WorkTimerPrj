@@ -6,6 +6,7 @@ Imports System.Threading
 Imports System.Reflection
 Imports System.Windows.Forms
 Imports System.Threading.Tasks
+Imports System.Security.Permissions
 
 Imports Raven.Client
 Imports Raven.Client.Document
@@ -15,7 +16,7 @@ Imports Raven.Storage.Esent
 Imports Raven.Json.Linq
 Imports Raven.Abstractions.Indexing
 Imports Raven.Abstractions.Commands
-Imports System.Security.Permissions
+
 
 
 '*****************************************************************************
@@ -98,7 +99,7 @@ NotInheritable Class MyNotifyIconApplication
         'AddHandler Application.on
         Timer1.Start()
         ' Ohne Appplication.Run geht es nicht
-        'Application.AddMessageFilter(MyNotifyIconApplication.PreFilterMessage)
+        Application.AddMessageFilter(MeasureItemEventArgs.PreFilterMessage)  'MyNotifyIconApplication.
 
         Application.Run()
 
