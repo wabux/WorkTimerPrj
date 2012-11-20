@@ -12,6 +12,7 @@ Imports Microsoft.Win32
 Imports System.Threading
 Imports System.Threading.Tasks
 Imports System.Reflection
+Imports System.Security.Permissions
 
 
 
@@ -25,7 +26,9 @@ Imports System.Reflection
 '  .Take(numberToRetrieve)).Cast<InstallationSummary>().ToList();
 
 'Dim installationSummaries As IEnumerable(Of InstallationSummary) = QueryAndCacheEtags(Function(session) session.Advanced.LuceneQuery(Of InstallationSummary)().Include(Function(x) x.ApplicationServerId).Include(Function(x) x.ApplicationWithOverrideVariableGroup.ApplicationId).Include(Function(x) x.ApplicationWithOverrideVariableGroup.CustomVariableGroupId).OrderByDescending(Function(summary) summary.InstallationStart).Take(numberToRetrieve)).Cast(Of InstallationSummary)().ToList()
+<SecurityPermission(SecurityAction.LinkDemand, Flags:=SecurityPermissionFlag.UnmanagedCode)> _
 Public Class frmWindow
+    Implements IMessageFilter
 
     Dim CurentWorkTime As WorkTime = New WorkTime
 
@@ -108,6 +111,7 @@ Public Class frmWindow
     Private Sub main_Load(sender As System.Object, e As System.EventArgs) Handles MyBase.Load
         Timer1.Enabled = True
         AddHandler Microsoft.Win32.SystemEvents.PowerModeChanged, AddressOf OnPowerModeChanged
+        Application.AddMessageFilter(Me)
     End Sub
 
     Private Sub btnTimer_Click(sender As System.Object, e As System.EventArgs) Handles btnTimer.Click
@@ -284,4 +288,139 @@ Public Class frmWindow
 
     '    MyBase.WndProc(m)
     'End Sub
+
+    Protected Overrides Sub WndProc(ByRef m As System.Windows.Forms.Message)
+        Const SC_RESTORE As Integer = &HF120
+        Const SC_SCREENSAVE As Integer = &HF140
+        Const WM_SYSCOMMAND As Integer = &H112, SC_MONITORPOWER As Integer = &HF170
+        Dim m_needToClose As Boolean = False
+
+        If m.Msg = WM_SYSCOMMAND Then
+            'Intercept System Command
+
+            ' notice the 0xFFF0 mask, it's because the system can use the 4 low order bits of the wParam value as stated in the MSDN library article about WM_SYSCOMMAND.
+
+            If (m.WParam.ToInt32() And &HFFF0) = SC_MONITORPOWER Then
+
+                'Intercept Monitor Power Message
+                Me.Text = "SC_SCREENSAVE"
+                m_needToClose = True
+
+            End If
+        End If
+
+        MyBase.WndProc(m)
+
+        If m.Msg = WM_SYSCOMMAND Then
+            Select Case m.WParam.ToInt32
+                Case SC_SCREENSAVE
+                    Me.Text = "SC_SCREENSAVE"
+
+            End Select
+        End If
+        MyBase.WndProc(m)
+
+    End Sub
+
+
+
+    <SecurityPermission(SecurityAction.Demand)> _
+    Public Function PreFilterMessage(ByRef m As System.Windows.Forms.Message) As Boolean Implements System.Windows.Forms.IMessageFilter.PreFilterMessage
+
+        'http://msdn.microsoft.com/en-us/library/windows/desktop/ms646360(v=vs.85).aspx
+
+        Const WM_NCLBUTTONDOWN As Integer = &HA1
+        Const WM_LBUTTONDBLCLK As Integer = &H203
+        Const WM_SYSCOMMAND As Integer = &H112
+        Const SC_RESTORE As Integer = &HF120
+        Const SC_SCREENSAVE As Integer = &HF140
+        Const WM_KEYDOWN As Integer = &H100
+        Const SC_MAXIMIZE As Integer = &HF030
+        Const KEY_PRESSED As Integer = &H1000
+        Const SC_HOTKEY As Integer = &HF150
+        Const SC_MONITORPOWER As Integer = &HF170
+
+
+        'WM_LBUTTONDOWN, WM_LBUTTONUP, WM_LBUTTONDOWN, WM_LBUTTONUP
+        If m.Msg = WM_NCLBUTTONDOWN Then
+            Select Case m.WParam.ToInt32()
+                Case WM_LBUTTONDBLCLK
+                    Me.Text = "WM_LBUTTONDBLCLK"
+            End Select
+
+        End If
+
+
+
+        If (m.Msg = KEY_PRESSED) Then
+            Select Case m.WParam.ToInt32()
+                Case Keys.F2
+                    Me.Text = "Keys.F2xx"
+            End Select
+        End If
+
+        If (m.Msg = WM_KEYDOWN) Then
+            Select Case m.WParam.ToInt32()
+                Case Keys.F2
+                    '  Me.Text = "Keys.F2"
+            End Select
+        End If
+
+
+        'Make sure you check the wParam or lParam (i forget which one)... 
+        'it is more likely that your application DOES receive WM_SYSCOMMAND but you 
+        '        don() 't decode the SC_SCREENSAVE correctly. 
+        'Check the docs - the lower 4 bits of the parameter are used internally, so 
+        'you must do 
+        'case WM_SYSCOMMAND: 
+        '  if (wParam & 0xfff0 == SC_SCREENSAVE) 
+        '  { 
+        '    // whatever 
+        '  } 
+        '  break; 
+        If m.Msg = WM_SYSCOMMAND And (m.WParam.ToInt32() And &HFFF0) = SC_MONITORPOWER Then
+            Me.Text = "SC_MONITORPOWER"
+        End If
+
+        If m.Msg = WM_SYSCOMMAND And ((m.WParam.ToInt32 And &HFFF0) = SC_SCREENSAVE) Then
+            Me.Text = "SC_SCREENSAVE"
+        End If
+
+        If m.Msg = WM_SYSCOMMAND Then
+            Select Case m.WParam.ToInt32
+                Case SC_SCREENSAVE
+                    Me.Text = "SC_SCREENSAVE"
+
+                Case SC_RESTORE
+                    Me.Text = "SC_RESTORE"
+
+                Case SC_MAXIMIZE
+                    Me.Text = "SC_MAXIMIZE"
+
+                Case SC_HOTKEY
+                    Me.Text = "SC_HOTKEY"
+
+                Case SC_MONITORPOWER
+                    Me.Text = "SC_MONITORPOWER"
+
+            End Select
+        End If
+
+        If m.Msg = SC_SCREENSAVE Then
+            Me.Text = "SC_SCREENSAVE"
+        End If
+
+
+        Select Case m.Msg
+            Case WM_SYSCOMMAND
+                If m.WParam.ToInt32 = SC_SCREENSAVE Then
+                    Me.Text = "SC_SCREENSAVE"
+                    Return True
+                End If
+
+                'Handled := TRUE; // disable startup of screensavers
+        End Select
+        Return False
+    End Function
 End Class
+

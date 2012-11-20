@@ -15,20 +15,36 @@ Imports Raven.Storage.Esent
 Imports Raven.Json.Linq
 Imports Raven.Abstractions.Indexing
 Imports Raven.Abstractions.Commands
+Imports System.Security.Permissions
 
 
 '*****************************************************************************
 NotInheritable Class MyNotifyIconApplication
+    Implements IMessageFilter
+
     Shared documentStore As Raven.Client.Embedded.EmbeddableDocumentStore = New EmbeddableDocumentStore()
     Shared session As Document.DocumentSession ' = CType(documentStore.OpenSession(), DocumentSession)
     Shared CurentWorkTime As WorkTime = New WorkTime
     Shared WithEvents Timer1 As System.Windows.Forms.Timer
+    Shared _text As Object
+    'Shared MyNotifyIconApplication As IMessageFilter
 
 
     Private Sub New()
     End Sub
 
     Private Shared notico As NotifyIcon
+
+    Private Shared Property text
+        Get
+            Return notico.Text
+        End Get
+        Set(value)
+            _text = value
+            notico.Text = String.Format("{0:hh}:{0:mm}", _text)
+        End Set
+    End Property
+
 
     '==========================================================================
     Public Shared Sub Main(astrArg As String())
@@ -82,9 +98,11 @@ NotInheritable Class MyNotifyIconApplication
         'AddHandler Application.on
         Timer1.Start()
         ' Ohne Appplication.Run geht es nicht
+        'Application.AddMessageFilter(MyNotifyIconApplication.PreFilterMessage)
+
         Application.Run()
 
-        MessageBox.Show("Quit")
+        MyNotifyIconApplication.Closing()
 
     End Sub
 
@@ -98,7 +116,7 @@ NotInheritable Class MyNotifyIconApplication
     End Sub
 
     '==========================================================================
-    Private Sub Closing(sender As [Object], e As EventArgs)
+    Private Shared Sub Closing()
         MessageBox.Show("Quit")
         session.Dispose()
         documentStore.Dispose()
@@ -214,4 +232,139 @@ NotInheritable Class MyNotifyIconApplication
         MyNotifyIconApplication.SetEndTimeEntry()
         MyNotifyIconApplication.notico.Text = String.Format("{0:hh}:{0:mm}", CurentWorkTime.WorkingHours)
     End Sub
+
+
+    <SecurityPermission(SecurityAction.Demand)> _
+    Public Function PreFilterMessage(ByRef m As System.Windows.Forms.Message) As Boolean Implements System.Windows.Forms.IMessageFilter.PreFilterMessage
+
+        'http://msdn.microsoft.com/en-us/library/windows/desktop/ms646360(v=vs.85).aspx
+
+        Const WM_NCLBUTTONDOWN As Integer = &HA1
+        Const WM_LBUTTONDBLCLK As Integer = &H203
+        Const WM_SYSCOMMAND As Integer = &H112
+        Const SC_RESTORE As Integer = &HF120
+        Const SC_SCREENSAVE As Integer = &HF140
+        Const WM_KEYDOWN As Integer = &H100
+        Const SC_MAXIMIZE As Integer = &HF030
+        Const KEY_PRESSED As Integer = &H1000
+        Const SC_HOTKEY As Integer = &HF150
+        Const SC_MONITORPOWER As Integer = &HF170
+
+
+        'WM_LBUTTONDOWN, WM_LBUTTONUP, WM_LBUTTONDOWN, WM_LBUTTONUP
+        If m.Msg = WM_NCLBUTTONDOWN Then
+            Select Case m.WParam.ToInt32()
+                Case WM_LBUTTONDBLCLK
+                    MyNotifyIconApplication.text = "WM_LBUTTONDBLCLK"
+            End Select
+
+        End If
+
+
+
+        If (m.Msg = KEY_PRESSED) Then
+            Select Case m.WParam.ToInt32()
+                Case Keys.F2
+                    MyNotifyIconApplication.text = "Keys.F2xx"
+            End Select
+        End If
+
+        If (m.Msg = WM_KEYDOWN) Then
+            Select Case m.WParam.ToInt32()
+                Case Keys.F2
+                    '  Me.Text = "Keys.F2"
+            End Select
+        End If
+
+
+        'Make sure you check the wParam or lParam (i forget which one)... 
+        'it is more likely that your application DOES receive WM_SYSCOMMAND but you 
+        '        don() 't decode the SC_SCREENSAVE correctly. 
+        'Check the docs - the lower 4 bits of the parameter are used internally, so 
+        'you must do 
+        'case WM_SYSCOMMAND: 
+        '  if (wParam & 0xfff0 == SC_SCREENSAVE) 
+        '  { 
+        '    // whatever 
+        '  } 
+        '  break; 
+        If m.Msg = WM_SYSCOMMAND And (m.WParam.ToInt32() And &HFFF0) = SC_MONITORPOWER Then
+            MyNotifyIconApplication.text = "SC_MONITORPOWER"
+        End If
+
+        If m.Msg = WM_SYSCOMMAND And ((m.WParam.ToInt32 And &HFFF0) = SC_SCREENSAVE) Then
+            MyNotifyIconApplication.text = "SC_SCREENSAVE"
+        End If
+
+        If m.Msg = WM_SYSCOMMAND Then
+            Select Case m.WParam.ToInt32
+                Case SC_SCREENSAVE
+                    MyNotifyIconApplication.text = "SC_SCREENSAVE"
+
+                Case SC_RESTORE
+                    MyNotifyIconApplication.text = "SC_RESTORE"
+
+                Case SC_MAXIMIZE
+                    MyNotifyIconApplication.text = "SC_MAXIMIZE"
+
+                Case SC_HOTKEY
+                    MyNotifyIconApplication.text = "SC_HOTKEY"
+
+                Case SC_MONITORPOWER
+                    MyNotifyIconApplication.text = "SC_MONITORPOWER"
+
+            End Select
+        End If
+
+        If m.Msg = SC_SCREENSAVE Then
+            MyNotifyIconApplication.text = "SC_SCREENSAVE"
+        End If
+
+
+        Select Case m.Msg
+            Case WM_SYSCOMMAND
+                If m.WParam.ToInt32 = SC_SCREENSAVE Then
+                    MyNotifyIconApplication.text = "SC_SCREENSAVE"
+                    Return True
+                End If
+
+                'Handled := TRUE; // disable startup of screensavers
+        End Select
+        Return False
+    End Function
+
+
+    Protected Sub WndProc(ByRef m As System.Windows.Forms.Message)
+        Const SC_RESTORE As Integer = &HF120
+        Const SC_SCREENSAVE As Integer = &HF140
+        Const WM_SYSCOMMAND As Integer = &H112, SC_MONITORPOWER As Integer = &HF170
+        Dim m_needToClose As Boolean = False
+
+        If m.Msg = WM_SYSCOMMAND Then
+            'Intercept System Command
+
+            ' notice the 0xFFF0 mask, it's because the system can use the 4 low order bits of the wParam value as stated in the MSDN library article about WM_SYSCOMMAND.
+
+            If (m.WParam.ToInt32() And &HFFF0) = SC_MONITORPOWER Then
+
+                'Intercept Monitor Power Message
+                Me.text = "SC_SCREENSAVE"
+                m_needToClose = True
+
+            End If
+        End If
+
+        'MyBase.WndProc(m)
+
+        If m.Msg = WM_SYSCOMMAND Then
+            Select Case m.WParam.ToInt32
+                Case SC_SCREENSAVE
+                    Me.text = "SC_SCREENSAVE"
+
+            End Select
+        End If
+        'MyBase.WndProc(m)
+
+    End Sub
+
 End Class
