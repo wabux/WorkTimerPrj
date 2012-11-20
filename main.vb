@@ -345,6 +345,7 @@ NotInheritable Class MyNotifyIconApplication
 
             ' notice the 0xFFF0 mask, it's because the system can use the 4 low order bits of the wParam value as stated in the MSDN library article about WM_SYSCOMMAND.
 
+
             If (m.WParam.ToInt32() And &HFFF0) = SC_MONITORPOWER Then
 
                 'Intercept Monitor Power Message
