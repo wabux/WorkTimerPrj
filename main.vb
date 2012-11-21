@@ -56,11 +56,13 @@ NotInheritable Class MyNotifyIconApplication
         documentStore.DataDirectory = Path.Combine(My.Computer.FileSystem.SpecialDirectories.CurrentUserApplicationData, "DB")
         documentStore.Initialize()
         session = CType(documentStore.OpenSession(), DocumentSession)
+        documentStore.Conventions.MaxNumberOfRequestsPerSession = 1000
+        session.Advanced.MaxNumberOfRequestsPerSession = 1000
         ReadEndTimeEntry()
 
         ' Dim Timer1 As System.Windows.Forms.Timer
         Timer1 = New System.Windows.Forms.Timer
-        Timer1.Interval = 30000
+        Timer1.Interval = New TimeSpan(0, 1, 0).Ticks
         AddHandler Timer1.Tick, New System.EventHandler(AddressOf TimerTick)
 
         ' Kontextmenü erzeugen
@@ -149,6 +151,8 @@ NotInheritable Class MyNotifyIconApplication
 
     Private Shared Sub ReadEndTimeEntry(Optional ByVal StartEvent As String = "")
         Dim CurentWorkTimeReadfromDB As Boolean = False
+        Dim llll As List(Of WorkTime) = New List(Of WorkTime)
+
 
         CurentWorkTime.EndTime = DateTime.Now
 
@@ -157,6 +161,8 @@ NotInheritable Class MyNotifyIconApplication
         .OrderByDescending(Function(WTime) WTime.EndTime)
         '.Distinct _
         '.ToArray()
+        llll = results.ToList()
+        'System.Linq.Enumerable.ToList(results)(IEnumerable)
 
         For Each li As WorkTime In results
             Dim tspn As TimeSpan = New TimeSpan(li.EndTime.Ticks - li.StartTime.Ticks)
