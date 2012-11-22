@@ -56,10 +56,8 @@ NotInheritable Class MyNotifyIconApplication
         documentStore.DataDirectory = Path.Combine(My.Computer.FileSystem.SpecialDirectories.CurrentUserApplicationData, "DB")
         documentStore.Initialize()
         session = CType(documentStore.OpenSession(), DocumentSession)
-
-        documentStore.Conventions.MaxNumberOfRequestsPerSession = 10000
-        session.Advanced.MaxNumberOfRequestsPerSession = 10000
-
+        documentStore.Conventions.MaxNumberOfRequestsPerSession = 1000
+        session.Advanced.MaxNumberOfRequestsPerSession = 1000
         ReadEndTimeEntry()
 
         ' Dim Timer1 As System.Windows.Forms.Timer
